@@ -23,7 +23,8 @@ namespace SmartJobTracker.API
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Register repositories - DI will inject JobRepository whenever IJobRepository is requested
+            // Register repositories - Dependency Injection will inject
+            // JobRepository whenever IJobRepository is requested
             builder.Services.AddScoped<IJobRepository, JobRepository>();
 
             var app = builder.Build();

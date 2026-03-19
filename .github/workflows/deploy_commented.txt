@@ -1,0 +1,55 @@
+# Pipeline name - shows in GitHub Actions tab
+name: Build, Test and Deploy to Azure
+
+# TRIGGERS - when does this pipeline run?
+on:
+  push:
+    branches:
+      - master        # Run when code pushed to master
+  pull_request:
+    branches:
+      - master        # Run when PR created against master
+
+# JOBS - what work gets done?
+jobs:
+  build-and-test:
+    runs-on: windows-latest   # Use Windows server to match our app
+
+    steps:
+      # Step 1 - Download your code from GitHub onto the build server
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 - Install .NET 9 on the build server
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      # Step 3 - Download NuGet packages (EF Core, Dapper, Swashbuckle etc)
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Step 4 - Compile the code in Release mode
+      # Release mode = optimized for production, no debug symbols
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # Step 5 - Run all 6 unit tests
+      # If any test fails, pipeline stops here - code never deploys!
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      # Step 6 - Package the API ready for deployment
+      # Creates optimized production files in ./publish folder
+      - name: Publish
+        run: dotnet publish SmartJobTracker.API/SmartJobTracker.API.csproj --configuration Release --output ./publish
+
+      # Step 7 - Upload packaged files to Azure App Service
+      # Uses the secret we saved in GitHub to authenticate with Azure
+      - name: Deploy to Azure
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'smartjobtracker-api'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish

@@ -1,0 +1,53 @@
+name: Build, Test and Deploy to Azure
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    
+    steps:
+    # Step 1 - Check out the code from GitHub
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Step 2 - Set up .NET 9
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    # Step 3 - Restore NuGet packages
+    - name: Restore dependencies
+      run: dotnet restore
+
+    # Step 4 - Build the solution
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    # Step 5 - Run unit tests
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal
+
+    # Step 6 - Publish the API project
+    - name: Publish
+      run: dotnet publish SmartJobTracker.API/SmartJobTracker.API.csproj --configuration Release --output ./publish
+
+    # Step 7 - Deploy to Azure App Service
+    - name: Deploy to Azure
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'smartjobtracker-api'
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./publish
+```
+
+Save it as `deploy.yml` inside:
+```
+C:\SM\Projects\SmartJobTracker\.github\workflows\

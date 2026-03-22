@@ -1,0 +1,54 @@
+# ============================================
+# CI - Build and Test Pipeline
+# ============================================
+# PURPOSE: Runs on every push and PR to master
+# Builds the code and runs all unit tests
+# If tests fail - we know immediately before deploying
+# This is the "safety net" pipeline
+# ============================================
+
+name: CI - Build and Test   # Shows in GitHub Actions tab
+
+# TRIGGERS - when does this pipeline run?
+on:
+  push:                     # Run when code is pushed
+    branches:
+      - master              # Only on master branch
+  pull_request:             # Also run on Pull Requests
+    branches:
+      - master              # Only PRs targeting master
+
+# JOBS - what work gets done
+jobs:
+  build-and-test:           # Job name
+    runs-on: windows-latest # Use Windows build server
+                            # Matches our local dev environment
+
+    steps:
+      # Step 1 - Download code from GitHub onto build server
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 - Install .NET 9 SDK on build server
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'   # x = latest patch version
+
+      # Step 3 - Download all NuGet packages
+      # (EF Core, Dapper, Swashbuckle, xUnit, Moq etc)
+      - name: Restore dependencies
+        run: dotnet restore
+
+      # Step 4 - Compile the solution in Release mode
+      # --no-restore = skip restore since we just did it
+      # Release mode = optimized, no debug info
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      # Step 5 - Run all unit tests
+      # --no-build = skip build since we just did it
+      # If ANY test fails, pipeline stops here with error
+      # This prevents broken code from ever deploying!
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal

@@ -1,0 +1,63 @@
+# ============================================
+# Docker - Build and Push Pipeline
+# ============================================
+# PURPOSE: Builds a Docker image of our API
+# and pushes it to Azure Container Registry
+# Runs on every push to master AFTER CI passes
+# ============================================
+# WHY DOCKER?
+# Packages our app + .NET runtime + config into
+# one portable "container" that runs anywhere
+# "Works on my machine" problem = SOLVED forever
+# ============================================
+
+name: Docker - Build and Push  # Shows in GitHub Actions tab
+
+# TRIGGERS - when does this pipeline run?
+on:
+  push:                        # Run when code is pushed
+    branches:
+      - master                 # Only on master branch
+                               # No PR trigger - we only
+                               # push images from master
+
+# JOBS
+jobs:
+  docker-build-push:           # Job name
+    runs-on: ubuntu-latest     # MUST be Linux!
+                               # Our Docker image is Linux-based
+                               # windows-latest would fail here
+                               # (learned this the hard way! 😄)
+
+    steps:
+      # Step 1 - Download code from GitHub onto build server
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2 - Authenticate with Azure Container Registry
+      # docker/login-action = pre-built action for Docker login
+      # registry = where we're logging into (our ACR)
+      # username/password = from GitHub Secrets (never exposed in logs)
+      # ${{ secrets.X }} = reads from GitHub repository secrets
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_LOGIN_SERVER }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      # Step 3 - Build Docker image from our Dockerfile
+      # docker build = reads Dockerfile and creates image
+      # -t = tag (name) for the image
+      # Format: registry/imagename:tag
+      # latest = always points to most recent build
+      # ./SmartJobTracker.API = folder containing Dockerfile
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.REGISTRY_LOGIN_SERVER }}/smartjobtracker-api:latest ./SmartJobTracker.API
+
+      # Step 4 - Push image to Azure Container Registry
+      # docker push = upload image to registry
+      # Now Azure Container Apps can pull and run it
+      # Anyone with registry access can pull this image
+      - name: Push Docker image to registry
+        run: docker push ${{ secrets.REGISTRY_LOGIN_SERVER }}/smartjobtracker-api:latest

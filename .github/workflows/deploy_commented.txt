@@ -1,53 +1,61 @@
-# Pipeline name - shows in GitHub Actions tab
-name: Build, Test and Deploy to Azure
+# ============================================
+# Deploy to Azure App Service Pipeline
+# ============================================
+# PURPOSE: Builds and deploys our .NET API
+# directly to Azure App Service (not Docker)
+# This is our PRIMARY deployment pipeline
+# Runs on every push to master
+# ============================================
+# FLOW:
+# Code pushed → Build → Publish → Deploy to Azure
+# Total time: ~2 minutes
+# ============================================
 
-# TRIGGERS - when does this pipeline run?
+name: Deploy to Azure App Service
+
 on:
   push:
     branches:
-      - master        # Run when code pushed to master
-  pull_request:
-    branches:
-      - master        # Run when PR created against master
+      - master             # Only deploy from master
 
-# JOBS - what work gets done?
 jobs:
-  build-and-test:
-    runs-on: windows-latest   # Use Windows server to match our app
+  deploy:
+    runs-on: windows-latest   # Windows matches our .NET app
 
     steps:
-      # Step 1 - Download your code from GitHub onto the build server
+      # Step 1 - Get the code
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Step 2 - Install .NET 9 on the build server
+      # Step 2 - Install .NET 9 on build server
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      # Step 3 - Download NuGet packages (EF Core, Dapper, Swashbuckle etc)
+      # Step 3 - Download NuGet packages
       - name: Restore dependencies
         run: dotnet restore
 
-      # Step 4 - Compile the code in Release mode
-      # Release mode = optimized for production, no debug symbols
+      # Step 4 - Compile in Release mode
+      # Release = optimized for production
+      # No debug symbols = smaller, faster
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      # Step 5 - Run all 6 unit tests
-      # If any test fails, pipeline stops here - code never deploys!
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
-
-      # Step 6 - Package the API ready for deployment
+      # Step 5 - Package the app for deployment
       # Creates optimized production files in ./publish folder
+      # This is what actually gets uploaded to Azure
       - name: Publish
         run: dotnet publish SmartJobTracker.API/SmartJobTracker.API.csproj --configuration Release --output ./publish
 
-      # Step 7 - Upload packaged files to Azure App Service
-      # Uses the secret we saved in GitHub to authenticate with Azure
-      - name: Deploy to Azure
+      # Step 6 - Upload to Azure App Service
+      # azure/webapps-deploy = Microsoft's official deploy action
+      # app-name = your Azure App Service name
+      # publish-profile = authentication file downloaded from Azure
+      #   stored as GitHub Secret - never committed to repo!
+      # package = folder containing our published files
+      - name: Deploy to Azure App Service
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'smartjobtracker-api'

@@ -37,7 +37,9 @@ namespace SmartJobTracker.API
                 app.UseSwaggerUI();
             //}
 
-            app.UseHttpsRedirection();
+            // HTTPS redirection disabled for container deployment
+            // Azure Container Apps handles HTTPS at the ingress level
+            // app.UseHttpsRedirection();
 
             app.UseAuthorization();
 

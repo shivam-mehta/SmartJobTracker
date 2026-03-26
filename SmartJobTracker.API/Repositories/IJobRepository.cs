@@ -1,4 +1,5 @@
 ﻿using SmartJobTracker.API.Models;
+using SmartJobTracker.API.DTOs;
 
 namespace SmartJobTracker.API.Repositories
 {
@@ -9,5 +10,8 @@ namespace SmartJobTracker.API.Repositories
         Task<Job> CreateJobAsync(Job job);
         Task<Job?> UpdateJobAsync(int id, Job job);
         Task<bool> DeleteJobAsync(int id);
+
+        // Get dashboard analytics summary
+        Task<DashboardDto> GetDashboardSummaryAsync();
     }
 }

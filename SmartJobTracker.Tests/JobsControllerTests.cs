@@ -4,6 +4,7 @@ using SmartJobTracker.API.Controllers;
 using SmartJobTracker.API.DTOs;
 using SmartJobTracker.API.Models;
 using SmartJobTracker.API.Repositories;
+using SmartJobTracker.API.Services;
 
 namespace SmartJobTracker.Tests
 {
@@ -17,19 +18,23 @@ namespace SmartJobTracker.Tests
     /// </summary>
     public class JobsControllerTests
     {
-        // Mock replaces the real JobRepository with a fake one
-        // We control exactly what it returns in each test
+        // JobsControllerTests.cs — constructor section
+        // _mockAiService follows the same Moq pattern as _mockRepo.
+        // We don't set up any AI methods yet since existing tests don't call AnalyzeJob.
+        // When we add the AnalyzeJob test later, we'll use _mockAiService.Setup(...) there.
         private readonly Mock<IJobRepository> _mockRepo;
         private readonly JobsController _controller;
+        private readonly Mock<IAIAnalysisService> _mockAiService;
 
         public JobsControllerTests()
         {
             // Create a fake IJobRepository using Moq
             _mockRepo = new Mock<IJobRepository>();
+            _mockAiService = new Mock<IAIAnalysisService>();
 
             // Inject the fake repository into the controller
             // Controller doesn't know or care it's a fake - DI in action!
-            _controller = new JobsController(_mockRepo.Object);
+            _controller = new JobsController(_mockRepo.Object, _mockAiService.Object);
         }
 
         // TEST 1 - GetAllJobs returns 200 OK with list of jobs

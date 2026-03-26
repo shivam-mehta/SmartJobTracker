@@ -2,6 +2,7 @@
 using SmartJobTracker.API.DTOs;
 using SmartJobTracker.API.Models;
 using SmartJobTracker.API.Repositories;
+using SmartJobTracker.API.Services;
 
 namespace SmartJobTracker.API.Controllers
 {
@@ -11,11 +12,14 @@ namespace SmartJobTracker.API.Controllers
     {
         // DI in action - .NET hands us IJobRepository automatically
         private readonly IJobRepository _jobRepository;
+        private readonly IAIAnalysisService _aiService;
+
 
         // Constructor - DI injects the repository here
-        public JobsController(IJobRepository jobRepository)
+        public JobsController(IJobRepository jobRepository, IAIAnalysisService aiService)
         {
             _jobRepository = jobRepository;
+            _aiService = aiService;
         }
 
         // GET /api/jobs
@@ -59,7 +63,6 @@ namespace SmartJobTracker.API.Controllers
                 JobUrl = dto.JobUrl,
                 JobDescription = dto.JobDescription,
                 Status = dto.Status,
-                Notes = dto.Notes,
                 DateFound = dto.DateFound
             };
 
@@ -84,7 +87,6 @@ namespace SmartJobTracker.API.Controllers
                 JobUrl = dto.JobUrl,
                 JobDescription = dto.JobDescription,
                 Status = dto.Status,
-                Notes = dto.Notes,
                 DateFound = dto.DateFound,
                 DateApplied = dto.DateApplied
             };
@@ -119,12 +121,35 @@ namespace SmartJobTracker.API.Controllers
                 JobUrl = job.JobUrl,
                 JobDescription = job.JobDescription,
                 Status = job.Status,
-                Notes = job.Notes,
+                MatchScore = job.MatchScore,
                 DateFound = job.DateFound,
                 DateApplied = job.DateApplied,
                 CreatedAt = job.CreatedAt,
-                UpdatedAt = job.UpdatedAt
+                UpdatedAt = job.UpdatedAt,
+                // Calculate DaysOld here so it's always fresh
+                DaysOld = (DateTime.UtcNow - job.DateFound).Days
             };
+        }
+
+        // POST /api/jobs/{id}/analyze
+        // Accepts resume text in request body, fetches stored job description from DB,
+        // sends both to Gemini for gap analysis, returns structured GapAnalysisResult.
+        [HttpPost("{id}/analyze")]
+        public async Task<IActionResult> AnalyzeJob(int id, [FromBody] AnalyzeJobRequestDto request)
+        {
+            var job = await _jobRepository.GetJobByIdAsync(id);
+            if (job == null) return NotFound();
+
+            var result = await _aiService.AnalyzeJobGapAsync(request.ResumeText, job.JobDescription);
+            return Ok(result);
+        }
+
+        // GET /api/jobs/dashboard - returns analytics summary for dashboard
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboardSummary()
+        {
+            var summary = await _jobRepository.GetDashboardSummaryAsync();
+            return Ok(summary);
         }
     }
 }

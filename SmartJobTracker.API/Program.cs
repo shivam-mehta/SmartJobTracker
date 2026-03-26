@@ -1,7 +1,9 @@
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.SemanticKernel;
 using SmartJobTracker.API.Data;
 using SmartJobTracker.API.Repositories;
+using SmartJobTracker.API.Services;
 
 namespace SmartJobTracker.API
 {
@@ -26,6 +28,30 @@ namespace SmartJobTracker.API
             // Register repositories - Dependency Injection will inject
             // JobRepository whenever IJobRepository is requested
             builder.Services.AddScoped<IJobRepository, JobRepository>();
+
+            // Register HttpClient for GeminiAIAnalysisService — typed client pattern.
+            // AddHttpClient wires up a dedicated HttpClient instance for this service.
+            // IAIAnalysisService is the interface — swap to OllamaAIAnalysisService or
+            // AzureOpenAIAnalysisService later just by changing this one line.
+            builder.Services.AddHttpClient<IAIAnalysisService, GeminiAIAnalysisService>();
+
+
+            // Register Semantic Kernel with Azure OpenAI
+            // Kernel is registered as Singleton - one instance for entire app lifetime
+            builder.Services.AddSingleton<Kernel>(sp => {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var kernel = Kernel.CreateBuilder()
+                    .AddAzureOpenAIChatCompletion(
+                        deploymentName: config["AzureOpenAI:DeploymentName"]!,
+                        endpoint: config["AzureOpenAI:Endpoint"]!,
+                        apiKey: config["AzureOpenAI:ApiKey"]!)
+                    .Build();
+                return kernel;
+            });
+
+            // Register Analysis Service - uses Kernel to talk to Azure OpenAI
+            builder.Services.AddScoped<IAIAnalysisService, AnalysisService>();
+
 
             var app = builder.Build();
 

@@ -1,67 +1,47 @@
 ﻿namespace SmartJobTracker.API.DTOs
 {
     /// <summary>
-    /// DTO used when RETURNING job data to the client
-    /// This is what the API sends back in responses
-    /// We control exactly what the client sees - no internal DB fields exposed
-    /// Think of it as the "public face" of your Job data
+    /// DTO returned to client for all job responses
+    /// Includes DaysOld (calculated) and MatchScore for dashboard display
     /// </summary>
     public class JobResponseDto
     {
-        /// <summary>
-        /// Job ID - client needs this to make update/delete requests
-        /// </summary>
         public int Id { get; set; }
-
-        /// <summary>
-        /// Company name
-        /// </summary>
         public string CompanyName { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Job title
-        /// </summary>
         public string JobTitle { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Job posting URL
-        /// </summary>
         public string JobUrl { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Full job description
-        /// </summary>
         public string JobDescription { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Current application status
-        /// New, Applied, Interview, Offer, Rejected
-        /// </summary>
         public string Status { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Optional notes about the job
-        /// </summary>
-        public string? Notes { get; set; }
+        // AI-generated match score 0-100
+        public int MatchScore { get; set; }
 
-        /// <summary>
-        /// Date job was found
-        /// </summary>
+        // Color theme helper for dashboard
+        // <60=red, 60-70=yellow, 70-80=green, 80-90=blue, 90+=gold
+        public string MatchScoreColor => MatchScore switch
+        {
+            >= 90 => "gold",
+            >= 80 => "blue",
+            >= 70 => "green",
+            >= 60 => "yellow",
+            _ => "red"
+        };
+
         public DateTime DateFound { get; set; }
-
-        /// <summary>
-        /// Date application was submitted - null if not yet applied
-        /// </summary>
         public DateTime? DateApplied { get; set; }
-
-        /// <summary>
-        /// When this record was created in our system
-        /// </summary>
         public DateTime CreatedAt { get; set; }
-
-        /// <summary>
-        /// When this record was last updated
-        /// </summary>
         public DateTime UpdatedAt { get; set; }
+
+        // Calculated from DateFound - not stored in DB
+        public int DaysOld { get; set; }
+
+        // Days old warning for dashboard
+        // green=fresh, yellow=7+ days, red=14+ days
+        public string DaysOldWarning => DaysOld switch
+        {
+            >= 14 => "red",
+            >= 7 => "yellow",
+            _ => "green"
+        };
     }
 }

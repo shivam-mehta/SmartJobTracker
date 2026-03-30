@@ -29,11 +29,14 @@ namespace SmartJobTracker.API
             // JobRepository whenever IJobRepository is requested
             builder.Services.AddScoped<IJobRepository, JobRepository>();
 
+            // Register Resume Repository
+            builder.Services.AddScoped<IResumeRepository, ResumeRepository>();
+
             // Register HttpClient for GeminiAIAnalysisService — typed client pattern.
             // AddHttpClient wires up a dedicated HttpClient instance for this service.
             // IAIAnalysisService is the interface — swap to OllamaAIAnalysisService or
             // AzureOpenAIAnalysisService later just by changing this one line.
-            builder.Services.AddHttpClient<IAIAnalysisService, GeminiAIAnalysisService>();
+            //builder.Services.AddHttpClient<IAIAnalysisService, GeminiAIAnalysisService>();
 
 
             // Register Semantic Kernel with Azure OpenAI

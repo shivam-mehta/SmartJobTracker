@@ -1,7 +1,7 @@
 ﻿# Stage 1 - Build stage
-# Use the official .NET 9 SDK image to build our app
+# Use the official .NET 10 SDK image to build our app
 # SDK image is larger but has everything needed to compile
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 # Set working directory inside the container
 WORKDIR /src
@@ -20,7 +20,7 @@ RUN dotnet publish -c Release -o /app/publish
 # Stage 2 - Runtime stage
 # Use smaller ASP.NET runtime image - no SDK needed to run
 # This keeps our final image lean and secure
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 
 # Set working directory
 WORKDIR /app

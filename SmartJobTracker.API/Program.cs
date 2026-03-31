@@ -23,7 +23,14 @@ namespace SmartJobTracker.API
             builder.Services.AddSwaggerGen();
             // Add database
             builder.Services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions => sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null
+                )
+            ));
 
             // Register repositories - Dependency Injection will inject
             // JobRepository whenever IJobRepository is requested

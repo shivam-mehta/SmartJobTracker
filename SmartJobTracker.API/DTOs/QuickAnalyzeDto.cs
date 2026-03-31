@@ -4,8 +4,8 @@ namespace SmartJobTracker.API.DTOs
 {
     /// <summary>
     /// DTO for quick job analysis - no DB save required
-    /// User pastes job description + resume text for instant AI comparison
-    /// Save to tracker is optional after seeing the match score
+    /// ResumeText is optional - auto-loads default resume if not provided
+    /// User decides to save to tracker or discard after seeing match score
     /// </summary>
     public class QuickAnalyzeDto
     {
@@ -16,9 +16,8 @@ namespace SmartJobTracker.API.DTOs
         public string JobDescription { get; set; } = string.Empty;
 
         /// <summary>
-        /// The candidate's resume text - pasted or loaded from stored resume
+        /// Optional - if not provided, default resume is auto-loaded
         /// </summary>
-        [Required(ErrorMessage = "Resume text is required")]
-        public string ResumeText { get; set; } = string.Empty;
+        public string? ResumeText { get; set; }
     }
 }

@@ -10,5 +10,6 @@ namespace SmartJobTracker.API.Data
         }
 
         public DbSet<Job> Jobs { get; set; }
+        public DbSet<Resume> Resumes { get; set; }
     }
 }

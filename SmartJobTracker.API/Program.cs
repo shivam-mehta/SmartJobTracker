@@ -22,9 +22,14 @@ namespace SmartJobTracker.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             // Add database
+            // Use Azure SQL in production, local SQL in development
+            var connectionString = builder.Environment.IsDevelopment()
+                ? builder.Configuration.GetConnectionString("DefaultConnection")
+                : builder.Configuration.GetConnectionString("AzureSqlConnection");
+
             builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(
-                builder.Configuration.GetConnectionString("DefaultConnection"),
+                connectionString,
                 sqlOptions => sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
                     maxRetryDelay: TimeSpan.FromSeconds(5),

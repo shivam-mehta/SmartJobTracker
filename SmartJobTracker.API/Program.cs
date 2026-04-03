@@ -87,8 +87,8 @@ namespace SmartJobTracker.API
 
             app.MapControllers();
 
-            app.MapGet("/debug/config", (IConfiguration config) =>
-            config.GetConnectionString("AzureSqlConnection")?.Substring(0, 50) ?? "NOT FOUND");
+            //app.MapGet("/debug/config", (IConfiguration config) =>
+            //config.GetConnectionString("AzureSqlConnection")?.Substring(0, 50) ?? "NOT FOUND");
             app.Run();
         }
     }
